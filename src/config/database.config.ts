@@ -1,12 +1,13 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { User } from '../entities/user.entity';
 
 export const databaseConfig: TypeOrmModuleOptions = {
   type: 'postgres',
   host: 'localhost',
-  port: 5432,
+  port: 5433,
   username: 'nest_user',
-  password: '197374',
-  database: 'nestapp', // Ovdje koristimo novu bazu!
-  entities: [__dirname + '/../entities/*.entity.{ts,js}'],
-  synchronize: true, // Automatski kreira tablice (samo za razvoj)
+  password: 'lozinka123',
+  database: 'mydb',
+  entities: [User],
+  synchronize: true,
 };

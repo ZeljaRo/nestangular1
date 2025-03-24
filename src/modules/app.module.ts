@@ -4,7 +4,8 @@ import { databaseConfig } from '../config/database.config';
 import { AuthService } from '../auth/auth.service';
 import { AuthController } from '../auth/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { UserService } from '../services/user/user.service';
+import { UsersService } from '../services/user/user.service';
+
 import { User } from '../entities/user.entity';
 
 @Module({
@@ -17,7 +18,7 @@ import { User } from '../entities/user.entity';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService],
-  exports: [AuthService, UserService],
+  providers: [AuthService, UsersService],
+  exports: [AuthService, UsersService],
 })
 export class AppModule {}

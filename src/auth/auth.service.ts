@@ -1,30 +1,59 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
+import { UsersService } from '../services/user/user.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  async register(userData: { username: string; password: string }) {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.usersService.findByEmail(email);
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const { password, ...result } = user;
+      return result;
+    }
+    return null;
+  }
+
+  async login(user: any) {
+    const validUser = await this.validateUser(user.email, user.password);
+    if (!validUser) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload = { username: validUser.email, sub: validUser.id };
     return {
-      message: 'User registered successfully',
-      user: { id: 1, password: hashedPassword },
+      access_token: this.jwtService.sign(payload),
     };
   }
 
-  async login(userData: { username: string; password: string }) {
-    // Ovdje bi inače trebala biti provjera u bazi podataka
-    const isPasswordValid = await bcrypt.compare(userData.password, '$2b$10$KRCbUocXZdJUAfEdTFs32ubNhmKXD6UgQrHoz7iR3QKicoHUNmjSi');
+  async register(userData: any) {
+    try {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-    if (!isPasswordValid) {
-      throw new Error('Invalid credentials');
+      console.log('✔️ Registracija korisnika:', {
+        email: userData.email,
+        korisnickoIme: userData.username,
+      });
+
+      const createdUser = await this.usersService.create({
+        ...userData,
+        password: hashedPassword,
+      });
+
+      const { password, ...result } = createdUser;
+
+      return {
+        message: 'User registered successfully',
+        user: result,
+      };
+    } catch (error) {
+      console.error('❌ Greška u register metodi:', error);
+      throw new InternalServerErrorException('Registration failed');
     }
-
-    const payload = { sub: 1 };
-    return {
-      accessToken: this.jwtService.sign(payload),
-    };
   }
 }
